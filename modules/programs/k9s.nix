@@ -156,37 +156,44 @@ in {
   };
 
   config = let
+    # darwin config dir changed in 0.25.4: https://github.com/derailed/k9s/pull/1322/files#diff-b335630551682c19a781afebcf4d07bf978fb1f8ac04c6bf87428ed5106870f5R283
+    configDir = if (pkgs.stdenv.isDarwin
+      && lib.versionAtLeast cfg.package.version "0.25.4") then
+      "Library/Application Support/k9s"
+    else
+      "${config.xdg.configHome}/k9s";
+
     skinSetting = if (!(cfg.settings ? k9s.ui.skin) && cfg.skins != { }) then {
       k9s.ui.skin = "${builtins.elemAt (builtins.attrNames cfg.skins) 0}";
     } else
       { };
 
     skinFiles = mapAttrs' (name: value:
-      nameValuePair "k9s/skins/${name}.yaml" {
+      nameValuePair "${configDir}/skins/${name}.yaml" {
         source = yamlFormat.generate "k9s-skin-${name}.yaml" value;
       }) cfg.skins;
   in mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile = {
-      "k9s/config.yaml" = mkIf (cfg.settings != { }) {
+    home.file = {
+      "${configDir}/config.yaml" = mkIf (cfg.settings != { }) {
         source = yamlFormat.generate "k9s-config"
           (lib.recursiveUpdate skinSetting cfg.settings);
       };
 
-      "k9s/aliases.yaml" = mkIf (cfg.aliases != { }) {
+      "${configDir}/aliases.yaml" = mkIf (cfg.aliases != { }) {
         source = yamlFormat.generate "k9s-aliases" cfg.aliases;
       };
 
-      "k9s/hotkey.yaml" = mkIf (cfg.hotkey != { }) {
+      "${configDir}/hotkey.yaml" = mkIf (cfg.hotkey != { }) {
         source = yamlFormat.generate "k9s-hotkey" cfg.hotkey;
       };
 
-      "k9s/plugin.yaml" = mkIf (cfg.plugin != { }) {
+      "${configDir}/plugin.yaml" = mkIf (cfg.plugin != { }) {
         source = yamlFormat.generate "k9s-plugin" cfg.plugin;
       };
 
-      "k9s/views.yaml" = mkIf (cfg.views != { }) {
+      "${configDir}/views.yaml" = mkIf (cfg.views != { }) {
         source = yamlFormat.generate "k9s-views" cfg.views;
       };
     } // skinFiles;
