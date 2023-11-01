@@ -7,6 +7,11 @@ let
   cfg = config.programs.k9s;
   yamlFormat = pkgs.formats.yaml { };
 
+  configDir = if pkgs.stdenv.isDarwin then
+    "Library/Application Support/k9s"
+  else
+    "${config.xdg.configHome}/k9s";
+
 in {
   meta.maintainers = [ hm.maintainers.katexochen ];
 
@@ -54,11 +59,11 @@ in {
   config = mkIf cfg.enable {
     home.packages = [ cfg.package ];
 
-    xdg.configFile."k9s/config.yml" = mkIf (cfg.settings != { }) {
+    home.file."${configDir}/config.yml" = mkIf (cfg.settings != { }) {
       source = yamlFormat.generate "k9s-config" cfg.settings;
     };
 
-    xdg.configFile."k9s/skin.yml" = mkIf (cfg.skin != { }) {
+    home.file."${configDir}/skin.yml" = mkIf (cfg.skin != { }) {
       source = yamlFormat.generate "k9s-skin" cfg.skin;
     };
   };
