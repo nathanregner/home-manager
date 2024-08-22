@@ -42,7 +42,9 @@ in {
   options.wayland.windowManager.hyprland = {
     enable = lib.mkEnableOption "Hyprland wayland compositor";
 
-    package = lib.mkPackageOption pkgs "hyprland" { };
+    package = lib.mkPackageOption pkgs "hyprland" {
+      nullable = true;
+    };
 
     finalPackage = lib.mkOption {
       type = lib.types.package;
